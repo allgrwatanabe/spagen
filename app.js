@@ -1,138 +1,140 @@
 document.addEventListener('DOMContentLoaded', function () {
-  var rangeUsage    = document.getElementById('rangeUsage');
-  var numUsage      = document.getElementById('numUsage');
-  var bottlePrice   = document.getElementById('bottlePrice');
-  var dispenserSel  = document.getElementById('dispenserCost');
-  var customCostWrap= document.getElementById('customCostWrap');
-  var customCost    = document.getElementById('customCost');
-  var filterPrice   = document.getElementById('filterPrice');
-  var subsidyType   = document.getElementById('subsidyType');
-  var btnCalc       = document.getElementById('btnCalc');
-  var btnBack       = document.getElementById('btnBack');
-  var screenInput   = document.getElementById('screen-input');
-  var screenResult  = document.getElementById('screen-result');
+  var rangeUsage       = document.getElementById('rangeUsage');
+  var numUsage         = document.getElementById('numUsage');
+  var bottlePrice      = document.getElementById('bottlePrice');
+  var dispenserSel     = document.getElementById('dispenserCost');
+  var customCostWrap   = document.getElementById('customCostWrap');
+  var customCost       = document.getElementById('customCost');
+  var filterSel        = document.getElementById('filterPrice');
+  var customFilterWrap = document.getElementById('customFilterWrap');
+  var customFilter     = document.getElementById('customFilter');
+  var subsidyType      = document.getElementById('subsidyType');
+  var btnCalc          = document.getElementById('btnCalc');
+  var btnBack          = document.getElementById('btnBack');
+  var screenInput      = document.getElementById('screen-input');
+  var screenResult     = document.getElementById('screen-result');
 
   // ガス代：5,500円 ÷ 2,000本 + 水道0.1円 = 2.85円/500ml
   var GAS_PER_BOTTLE = (5500 / 2000) + 0.1;
 
-  // 補助金設定
   var SUBSIDY = {
-    none:   { label: 'なし',           limit: 0,      rate: 0 },
-    normal: { label: '通常枠',         limit: 500000, rate: 2/3 },
-    wage:   { label: '賃金引上げ枠',   limit: 2000000,rate: 2/3 }
+    none:   { label: 'なし',         limit: 0,       rate: 0   },
+    normal: { label: '通常枠',       limit: 500000,  rate: 2/3 },
+    wage:   { label: '賃金引上げ枠', limit: 2000000, rate: 2/3 }
   };
 
   rangeUsage.addEventListener('input', function () { numUsage.value = rangeUsage.value; });
   numUsage.addEventListener('input',   function () { rangeUsage.value = numUsage.value; });
 
-  function syncCustomWrap() {
-    if (dispenserSel.value === 'custom') {
-      customCostWrap.style.display = 'block';
-    } else {
-      customCostWrap.style.display = 'none';
-      customCost.classList.remove('error');
-    }
+  function syncCostWrap() {
+    customCostWrap.style.display = dispenserSel.value === 'custom' ? 'block' : 'none';
+    if (dispenserSel.value !== 'custom') customCost.classList.remove('error');
   }
-  dispenserSel.addEventListener('change', syncCustomWrap);
-  dispenserSel.addEventListener('input',  syncCustomWrap);
+  dispenserSel.addEventListener('change', syncCostWrap);
+  dispenserSel.addEventListener('input',  syncCostWrap);
+
+  function syncFilterWrap() {
+    customFilterWrap.style.display = filterSel.value === 'custom' ? 'block' : 'none';
+    if (filterSel.value !== 'custom') customFilter.classList.remove('error');
+  }
+  filterSel.addEventListener('change', syncFilterWrap);
+  filterSel.addEventListener('input',  syncFilterWrap);
 
   function fmtYen(n) {
     return '¥' + Math.round(n).toLocaleString('ja-JP');
   }
 
-  function calcRoi(cost, monthlySaving) {
-    if (monthlySaving <= 0) return '削減効果なし';
-    var totalMonths = cost / monthlySaving;
-    var years  = Math.floor(totalMonths / 12);
-    var months = Math.ceil(totalMonths % 12);
-    var txt = '';
-    if (years  > 0) txt += years  + '年';
-    if (months > 0) txt += months + 'ヶ月';
-    if (txt === '')  txt = '1ヶ月未満';
-    return txt;
+  function calcRoi(cost, saving) {
+    if (saving <= 0) return '削減効果なし';
+    var tm = cost / saving;
+    var y  = Math.floor(tm / 12);
+    var m  = Math.ceil(tm % 12);
+    var t  = '';
+    if (y > 0) t += y + '年';
+    if (m > 0) t += m + 'ヶ月';
+    return t || '1ヶ月未満';
   }
 
   btnCalc.addEventListener('click', function () {
-    var usage  = parseFloat(numUsage.value)    || 0;
-    var price  = parseFloat(bottlePrice.value) || 0;
-    var filter = parseFloat(filterPrice.value) || 0;
-    var cost;
+    var usage = parseFloat(numUsage.value)    || 0;
+    var price = parseFloat(bottlePrice.value) || 0;
+    var cost, filter;
 
+    // 販売価格の取得
     if (dispenserSel.value === 'custom') {
       cost = parseFloat(customCost.value) || 0;
-      if (cost <= 0) {
-        customCost.classList.add('error');
-        customCost.focus();
-        return;
-      }
+      if (cost <= 0) { customCost.classList.add('error'); customCost.focus(); return; }
       customCost.classList.remove('error');
     } else {
       cost = parseFloat(dispenserSel.value) || 0;
     }
 
+    // フィルター代の取得
+    if (filterSel.value === 'custom') {
+      filter = parseFloat(customFilter.value) || 0;
+      if (filter < 7700) { customFilter.classList.add('error'); customFilter.focus(); return; }
+      customFilter.classList.remove('error');
+    } else {
+      filter = parseFloat(filterSel.value) || 0;
+    }
+
     // 月間コスト計算（30日換算）
-    var monthlyPet      = usage * price * 30;
-    var monthlyGas      = usage * GAS_PER_BOTTLE * 30;
-    var monthlyFilter   = (filter * 2) / 12;
-    var monthlyDisp     = monthlyGas + monthlyFilter;
-    var monthlySaving   = monthlyPet - monthlyDisp;
+    var monthlyPet    = usage * price * 30;
+    var monthlyGas    = usage * GAS_PER_BOTTLE * 30;
+    var monthlyFilter = (filter * 2) / 12;
+    var monthlyDisp   = monthlyGas + monthlyFilter;
+    var monthlySaving = monthlyPet - monthlyDisp;
 
     // 年間コスト
-    var yearlyPet     = monthlyPet  * 12;
-    var yearlyDisp    = monthlyDisp * 12;
-    var yearlySaving  = monthlySaving * 12;
+    var yearlyPet    = monthlyPet    * 12;
+    var yearlyDisp   = monthlyDisp   * 12;
+    var yearlySaving = monthlySaving * 12;
 
     // 補助金計算
-    var subsidy     = SUBSIDY[subsidyType.value] || SUBSIDY.none;
-    var subsidyAmt  = Math.min(cost * subsidy.rate, subsidy.limit);
-    var netCost     = cost - subsidyAmt;
+    var sub      = SUBSIDY[subsidyType.value] || SUBSIDY.none;
+    var subAmt   = Math.min(cost * sub.rate, sub.limit);
+    var netCost  = cost - subAmt;
 
     // 結果セット
-    document.getElementById('r-usage').textContent   = usage + ' 本/日';
-    document.getElementById('r-price').textContent   = fmtYen(price) + '/本';
-    document.getElementById('r-cost').textContent    = fmtYen(cost);
-    document.getElementById('r-filter').textContent  = fmtYen(filter) + '/本';
+    document.getElementById('r-usage').textContent  = usage + ' 本/日';
+    document.getElementById('r-price').textContent  = fmtYen(price) + '/本';
+    document.getElementById('r-cost').textContent   = fmtYen(cost);
+    document.getElementById('r-filter').textContent = fmtYen(filter) + '/本';
 
-    document.getElementById('r-monthly-pet').textContent   = fmtYen(monthlyPet);
-    document.getElementById('r-monthly-disp').textContent  = fmtYen(monthlyDisp);
-    var mSavEl = document.getElementById('r-monthly-saving');
-    mSavEl.textContent = fmtYen(monthlySaving);
-    mSavEl.className = 'cval ' + (monthlySaving >= 0 ? 'green' : 'red');
+    document.getElementById('r-monthly-pet').textContent  = fmtYen(monthlyPet);
+    document.getElementById('r-monthly-disp').textContent = fmtYen(monthlyDisp);
+    var ms = document.getElementById('r-monthly-saving');
+    ms.textContent = fmtYen(monthlySaving);
+    ms.className   = 'cval ' + (monthlySaving >= 0 ? 'green' : 'red');
 
-    document.getElementById('r-yearly-pet').textContent    = fmtYen(yearlyPet);
-    document.getElementById('r-yearly-disp').textContent   = fmtYen(yearlyDisp);
-    var ySavEl = document.getElementById('r-yearly-saving');
-    ySavEl.textContent = fmtYen(yearlySaving);
-    ySavEl.className = 'cval ' + (yearlySaving >= 0 ? 'green' : 'red');
+    document.getElementById('r-yearly-pet').textContent  = fmtYen(yearlyPet);
+    document.getElementById('r-yearly-disp').textContent = fmtYen(yearlyDisp);
+    var ys = document.getElementById('r-yearly-saving');
+    ys.textContent = fmtYen(yearlySaving);
+    ys.className   = 'cval ' + (yearlySaving >= 0 ? 'green' : 'red');
 
     document.getElementById('r-initial').textContent = fmtYen(cost);
 
-    // 回収期間（補助金なし）
     var roiEl = document.getElementById('r-roi');
-    var roiText = calcRoi(cost, monthlySaving);
-    roiEl.textContent = roiText;
-    roiEl.className = 'rvalue' + (monthlySaving > 0 ? '' : ' red');
+    roiEl.textContent = calcRoi(cost, monthlySaving);
+    roiEl.className   = 'rvalue' + (monthlySaving > 0 ? '' : ' red');
 
-    // 補助金ブロック
-    var subsidyBlock    = document.getElementById('subsidy-block');
-    var roiSubsidyBlock = document.getElementById('roi-subsidy-block');
-    var roiLabel        = document.getElementById('roi-label');
+    var subBlock    = document.getElementById('subsidy-block');
+    var roiSubBlock = document.getElementById('roi-subsidy-block');
+    var roiLabel    = document.getElementById('roi-label');
 
-    if (subsidy.rate > 0 && subsidyAmt > 0) {
-      document.getElementById('r-subsidy-amount').textContent = '−' + fmtYen(subsidyAmt) + '（' + subsidy.label + '）';
-      document.getElementById('r-net-cost').textContent = fmtYen(netCost);
-
-      var roiSubsidyEl = document.getElementById('r-roi-subsidy');
-      var roiSubsidyText = calcRoi(netCost, monthlySaving);
-      roiSubsidyEl.textContent = roiSubsidyText;
-      roiSubsidyEl.className = 'rvalue' + (monthlySaving > 0 ? ' green' : ' red');
-
-      subsidyBlock.classList.remove('hidden');
-      roiSubsidyBlock.classList.remove('hidden');
+    if (sub.rate > 0 && subAmt > 0) {
+      document.getElementById('r-subsidy-amount').textContent = '−' + fmtYen(subAmt) + '（' + sub.label + '）';
+      document.getElementById('r-net-cost').textContent       = fmtYen(netCost);
+      var roiSub = document.getElementById('r-roi-subsidy');
+      roiSub.textContent = calcRoi(netCost, monthlySaving);
+      roiSub.className   = 'rvalue' + (monthlySaving > 0 ? ' green' : ' red');
+      subBlock.classList.remove('hidden');
+      roiSubBlock.classList.remove('hidden');
       roiLabel.textContent = '補助金なしの回収期間';
     } else {
-      subsidyBlock.classList.add('hidden');
-      roiSubsidyBlock.classList.add('hidden');
+      subBlock.classList.add('hidden');
+      roiSubBlock.classList.add('hidden');
       roiLabel.textContent = '初期費用の回収期間';
     }
 

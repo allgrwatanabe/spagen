@@ -9,13 +9,11 @@
 <body>
 <div class="wrap">
 
-  <!-- 入力画面 -->
   <div id="screen-input">
     <h2>コスト削減シミュレーター</h2>
 
     <div class="card">
       <div class="section-title">使用状況</div>
-
       <div class="field">
         <label>1日の使用量（500ml換算）</label>
         <div class="slider-row">
@@ -24,7 +22,6 @@
           <span class="slider-unit">本</span>
         </div>
       </div>
-
       <div class="field">
         <label>ペットボトル1本の仕入値（円・税込）</label>
         <input type="number" id="bottlePrice" value="80" min="1">
@@ -33,9 +30,8 @@
 
     <div class="card">
       <div class="section-title">ディスペンサー導入費用</div>
-
       <div class="field">
-        <label>卸価格（税込）</label>
+        <label>販売価格（税込）</label>
         <select id="dispenserCost">
           <option value="custom">自由入力</option>
           <option value="255000">255,000円</option>
@@ -45,26 +41,29 @@
           <option value="655000">655,000円</option>
           <option value="755000">755,000円</option>
         </select>
-        <div id="customCostWrap">
+        <div class="custom-wrap" id="customCostWrap">
           <input type="number" id="customCost" placeholder="例：330000" min="1">
           <p class="custom-hint">半角数字で円単位入力</p>
         </div>
       </div>
-
       <div class="field">
         <label>2回目以降のフィルター代（1本・税込）<br><span class="field-note">※半年ごとに交換、年2本必要</span></label>
         <select id="filterPrice">
           <option value="7700">7,700円</option>
           <option value="10000">10,000円</option>
           <option value="15400">15,400円</option>
+          <option value="custom">自由入力</option>
         </select>
+        <div class="custom-wrap" id="customFilterWrap">
+          <input type="number" id="customFilter" placeholder="例：8800" min="7700">
+          <p class="custom-hint">7,700円以上で入力してください</p>
+        </div>
       </div>
     </div>
 
     <div class="card">
       <div class="section-title">小規模事業者持続化補助金（任意）</div>
       <p class="section-note">補助金を活用する場合は枠を選択してください</p>
-
       <div class="field">
         <label>補助金の枠</label>
         <select id="subsidyType">
@@ -78,79 +77,47 @@
     <button class="btn-primary" id="btnCalc">シミュレーションを実行</button>
   </div>
 
-  <!-- 結果画面 -->
   <div id="screen-result" class="hidden">
     <h2>シミュレーション結果</h2>
 
     <div class="card">
       <div class="section-title">毎月のコスト比較（30日換算）</div>
-      <div class="compare-row">
-        <span class="clabel">ペットボトル利用時</span>
-        <span class="cval" id="r-monthly-pet">-</span>
-      </div>
-      <div class="compare-row">
-        <span class="clabel">ディスペンサー利用時<br><small>（ガス・水道・フィルター月割含む）</small></span>
-        <span class="cval" id="r-monthly-disp">-</span>
-      </div>
-      <div class="compare-row highlight">
-        <span class="clabel">毎月の削減額</span>
-        <span class="cval green" id="r-monthly-saving">-</span>
-      </div>
+      <div class="compare-row"><span class="clabel">ペットボトル利用時</span><span class="cval" id="r-monthly-pet">-</span></div>
+      <div class="compare-row"><span class="clabel">ディスペンサー利用時<br><small>（ガス・水道・フィルター月割含む）</small></span><span class="cval" id="r-monthly-disp">-</span></div>
+      <div class="compare-row highlight"><span class="clabel">毎月の削減額</span><span class="cval green" id="r-monthly-saving">-</span></div>
     </div>
 
     <div class="card">
       <div class="section-title">年間コスト比較</div>
-      <div class="compare-row">
-        <span class="clabel">ペットボトル利用時</span>
-        <span class="cval" id="r-yearly-pet">-</span>
-      </div>
-      <div class="compare-row">
-        <span class="clabel">ディスペンサー利用時</span>
-        <span class="cval" id="r-yearly-disp">-</span>
-      </div>
-      <div class="compare-row highlight">
-        <span class="clabel">年間の削減額</span>
-        <span class="cval green" id="r-yearly-saving">-</span>
-      </div>
+      <div class="compare-row"><span class="clabel">ペットボトル利用時</span><span class="cval" id="r-yearly-pet">-</span></div>
+      <div class="compare-row"><span class="clabel">ディスペンサー利用時</span><span class="cval" id="r-yearly-disp">-</span></div>
+      <div class="compare-row highlight"><span class="clabel">年間の削減額</span><span class="cval green" id="r-yearly-saving">-</span></div>
     </div>
 
     <div class="card">
       <div class="section-title">初期費用の回収期間</div>
-      <div class="compare-row">
-        <span class="clabel">導入費用</span>
-        <span class="cval" id="r-initial">-</span>
-      </div>
-
+      <div class="compare-row"><span class="clabel">販売価格</span><span class="cval" id="r-initial">-</span></div>
       <div id="subsidy-block" class="hidden">
-        <div class="compare-row">
-          <span class="clabel">補助金額</span>
-          <span class="cval green" id="r-subsidy-amount">-</span>
-        </div>
-        <div class="compare-row highlight">
-          <span class="clabel">実質負担額</span>
-          <span class="cval" id="r-net-cost">-</span>
-        </div>
+        <div class="compare-row"><span class="clabel">補助金額</span><span class="cval green" id="r-subsidy-amount">-</span></div>
+        <div class="compare-row highlight"><span class="clabel">実質負担額</span><span class="cval" id="r-net-cost">-</span></div>
       </div>
-
       <div class="result-block">
-        <div class="rlabel" id="roi-label">補助金なしの回収期間</div>
+        <div class="rlabel" id="roi-label">初期費用の回収期間</div>
         <div class="rvalue" id="r-roi">-</div>
       </div>
-
       <div id="roi-subsidy-block" class="hidden">
         <div class="result-block">
           <div class="rlabel">補助金活用後の回収期間</div>
           <div class="rvalue green" id="r-roi-subsidy">-</div>
         </div>
       </div>
-
       <p class="note">※毎月の削減額から算出した目安の期間です</p>
     </div>
 
-    <div class="card summary-card">
+    <div class="card">
       <div class="summary-row"><span>1日の使用量</span><span id="r-usage">-</span></div>
       <div class="summary-row"><span>ペットボトル仕入値</span><span id="r-price">-</span></div>
-      <div class="summary-row"><span>導入費用</span><span id="r-cost">-</span></div>
+      <div class="summary-row"><span>販売価格</span><span id="r-cost">-</span></div>
       <div class="summary-row"><span>フィルター代（1本）</span><span id="r-filter">-</span></div>
     </div>
 

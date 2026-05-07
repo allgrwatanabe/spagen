@@ -33,13 +33,13 @@
       <div class="field">
         <label>販売価格（税込）</label>
         <select id="dispenserCost">
-          <option value="custom">自由入力</option>
           <option value="255000">255,000円</option>
           <option value="355000">355,000円</option>
           <option value="455000">455,000円</option>
           <option value="555000">555,000円</option>
           <option value="655000">655,000円</option>
-          <option value="755000">755,000円</option>
+          <option value="755000" selected>755,000円</option>
+          <option value="custom">自由入力</option>
         </select>
         <div class="custom-wrap" id="customCostWrap">
           <input type="number" id="customCost" placeholder="例：330000" min="1">
@@ -51,7 +51,7 @@
         <select id="filterPrice">
           <option value="7700">7,700円</option>
           <option value="10000">10,000円</option>
-          <option value="15400">15,400円</option>
+          <option value="15400" selected>15,400円</option>
           <option value="custom">自由入力</option>
         </select>
         <div class="custom-wrap" id="customFilterWrap">

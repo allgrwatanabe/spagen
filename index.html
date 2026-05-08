@@ -18,13 +18,13 @@
         <label>1日の使用量（500ml換算）</label>
         <div class="slider-row">
           <input type="range" id="rangeUsage" min="1" max="100" value="20" step="1">
-          <input type="number" class="num-box" id="numUsage" min="1" max="100" value="20">
+          <input type="number" class="num-box" id="numUsage" min="1" max="100" value="20" inputmode="numeric">
           <span class="slider-unit">本</span>
         </div>
       </div>
       <div class="field">
         <label>ペットボトル1本の仕入値（円・税込）</label>
-        <input type="number" id="bottlePrice" value="80" min="1">
+        <input type="number" id="bottlePrice" value="80" min="1" inputmode="numeric">
       </div>
     </div>
 
@@ -42,7 +42,7 @@
           <option value="custom">自由入力</option>
         </select>
         <div class="custom-wrap" id="customCostWrap">
-          <input type="number" id="customCost" placeholder="例：330000" min="1">
+          <input type="number" id="customCost" placeholder="例：330000" min="1" inputmode="numeric">
           <p class="custom-hint">半角数字で円単位入力</p>
         </div>
       </div>
@@ -50,24 +50,29 @@
         <label>2回目以降のフィルター代（1本・税込）<br><span class="field-note">※半年ごとに交換、年2本必要</span></label>
         <select id="filterPrice">
           <option value="7700">7,700円</option>
-          <option value="10000">10,000円</option>
+          <option value="11000">11,000円</option>
           <option value="15400" selected>15,400円</option>
           <option value="custom">自由入力</option>
         </select>
         <div class="custom-wrap" id="customFilterWrap">
-          <input type="number" id="customFilter" placeholder="例：8800" min="7700">
+          <input type="number" id="customFilter" placeholder="例：8800" min="7700" inputmode="numeric">
           <p class="custom-hint">7,700円以上で入力してください</p>
         </div>
       </div>
     </div>
 
     <div class="card">
-      <div class="section-title">小規模事業者持続化補助金（任意）</div>
-      <p class="section-note">補助金を活用する場合は枠を選択してください</p>
+      <div class="section-title">小規模事業者持続化補助金</div>
       <div class="field">
+        <label>補助金の活用</label>
+        <select id="subsidyUse">
+          <option value="none">活用しない</option>
+          <option value="use">活用する</option>
+        </select>
+      </div>
+      <div class="field hidden" id="subsidyTypeWrap">
         <label>補助金の枠</label>
         <select id="subsidyType">
-          <option value="none">利用しない</option>
           <option value="normal">通常枠（上限50万円・補助率2/3）</option>
           <option value="wage">賃金引上げ枠（上限200万円・補助率2/3）</option>
         </select>
@@ -125,6 +130,15 @@
   </div>
 
 </div>
+
+<!-- ポップアップ -->
+<div id="popup-overlay" class="hidden">
+  <div class="popup-box">
+    <p>小規模事業者持続化補助金で申請をする場合は、炭酸ディスペンサー単体での申請が行えません。<br><br>「炭酸ディスペンサーを導入したことを広報活動に利用し、販促に邁進する」という想定で申請を行う為、他の商品とセットで申請致します。</p>
+    <button class="popup-close" id="popupClose">閉じる</button>
+  </div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>

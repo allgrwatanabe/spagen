@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>炭酸ディスペンサー コスト削減シミュレーター</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f0f4f8; color: #2d3748; min-height: 100vh; padding: 20px 16px 40px; }
+    .wrap { max-width: 420px; margin: 0 auto; }
+    h2 { font-size: 17px; font-weight: 600; text-align: center; color: #2d3748; margin-bottom: 18px; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 20px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .section-title { font-size: 13px; font-weight: 700; color: #2b6cb0; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #ebf4ff; }
+    .field { margin-bottom: 16px; }
+    .field:last-child { margin-bottom: 0; }
+    .field label { display: block; font-size: 13px; font-weight: 600; color: #718096; margin-bottom: 8px; }
+    .field-note { font-size: 11px; font-weight: 400; color: #a0aec0; }
+    .field input[type="number"] { width: 100%; padding: 12px 14px; border: 1px solid #cbd5e0; border-radius: 8px; background: #f8fafc; color: #2d3748; font-size: 15px; font-family: inherit; appearance: none; -webkit-appearance: none; text-align: right; }
+    .field select { width: 100%; padding: 12px 14px; border: 1px solid #cbd5e0; border-radius: 8px; background: #f8fafc; color: #2d3748; font-size: 15px; font-family: inherit; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+    .slider-row { display: flex; align-items: center; gap: 10px; }
+    .slider-row input[type="range"] { flex: 1; -webkit-appearance: none; height: 4px; background: #cbd5e0; border-radius: 2px; outline: none; }
+    .slider-row input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #2b6cb0; cursor: pointer; }
+    .num-box { width: 58px; padding: 9px 8px; border: 1px solid #cbd5e0; border-radius: 8px; background: #f8fafc; color: #2d3748; font-size: 15px; text-align: right; font-family: inherit; }
+    .slider-unit { font-size: 13px; color: #718096; white-space: nowrap; }
+    .custom-wrap { display: none; margin-top: 10px; }
+    .custom-wrap input[type="number"] { width: 100%; padding: 12px 14px; border: 2px solid #4299e1; border-radius: 8px; background: #ebf8ff; color: #2d3748; font-size: 15px; font-family: inherit; appearance: none; -webkit-appearance: none; text-align: right; }
+    .custom-wrap input[type="number"].error { border-color: #c53030; background: #fff5f5; }
+    .custom-hint { font-size: 11px; color: #a0aec0; margin-top: 5px; }
+    .radio-group { display: flex; gap: 10px; }
+    .radio-label { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: 1.5px solid #cbd5e0; border-radius: 8px; font-size: 14px; font-weight: 500; color: #718096; cursor: pointer; text-align: center; transition: all 0.15s; }
+    .radio-label input[type="radio"] { accent-color: #2b6cb0; width: 16px; height: 16px; }
+    .radio-label.selected { border-color: #2b6cb0; background: #ebf4ff; color: #2b6cb0; font-weight: 600; }
+    .subsidy-detail-wrap { display: none; margin-top: 14px; padding: 14px 16px; background: #fffbeb; border: 1.5px solid #f6c90e; border-radius: 10px; }
+    .subsidy-detail-title { font-size: 13px; font-weight: 700; color: #92610a; margin-bottom: 12px; }
+    .subsidy-detail-wrap .field { margin-bottom: 12px; }
+    .subsidy-detail-wrap .field:last-child { margin-bottom: 0; }
+    .subsidy-detail-wrap .field label { color: #7a5100; }
+    .subsidy-detail-wrap .field select,
+    .subsidy-detail-wrap .field input[type="number"] { background: #fff; border-color: #f6c90e; }
+    .wage-note { font-size: 12px; font-weight: 600; color: #c53030; margin-top: 10px; padding: 8px 10px; background: #fff5f5; border-radius: 6px; line-height: 1.6; }
+    .notice-box { display: none; margin-top: 14px; padding: 14px 16px; background: #fffbeb; border: 1.5px solid #f6c90e; border-radius: 10px; }
+    .notice-title { font-size: 13px; font-weight: 700; color: #92610a; margin-bottom: 8px; }
+    .notice-body { font-size: 12px; color: #7a5100; line-height: 1.8; }
+    .btn-primary { width: 100%; padding: 16px; background: #2b6cb0; color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 6px; font-family: inherit; box-shadow: 0 3px 8px rgba(43,108,176,0.35); }
+    .btn-primary:active { background: #2c5282; }
+    .btn-back { width: 100%; padding: 14px; background: transparent; color: #718096; border: 1px solid #cbd5e0; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 6px; font-family: inherit; }
+    .compare-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f4f8; font-size: 13px; gap: 8px; }
+    .compare-row:last-child { border-bottom: none; }
+    .compare-row.highlight { background: #f7fafc; margin: 0 -20px; padding: 10px 20px; }
+    .clabel { color: #718096; flex: 1; line-height: 1.4; }
+    .clabel small { font-size: 11px; }
+    .cval { font-weight: 600; color: #2d3748; white-space: nowrap; }
+    .cval.green { color: #276749; }
+    .cval.red { color: #c53030; }
+    .result-block { text-align: center; padding: 22px 0; border-bottom: 1px solid #f0f4f8; }
+    .result-block:last-of-type { border-bottom: none; padding-bottom: 4px; }
+    .rlabel { font-size: 12px; color: #718096; margin-bottom: 8px; font-weight: 600; }
+    .rvalue { font-size: 38px; font-weight: 700; line-height: 1.1; color: #2d3748; }
+    .rvalue.green { color: #276749; }
+    .rvalue.red { color: #c53030; }
+    .wage-result-note { font-size: 11px; color: #c53030; margin-top: 8px; line-height: 1.6; }
+    .note { font-size: 11px; color: #a0aec0; text-align: center; margin-top: 16px; line-height: 1.7; }
+    .summary-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 12px; border-bottom: 1px solid #f0f4f8; color: #718096; }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-row span:last-child { font-weight: 600; color: #2d3748; }
+    .alert-box { display: none; margin-top: 14px; padding: 14px 16px; background: #fff5f5; border: 1.5px solid #c53030; border-radius: 10px; font-size: 12px; color: #c53030; line-height: 1.8; font-weight: 600; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="screen-input">
+    <h2>コスト削減シミュレーター</h2>
+
+    <div class="card">
+      <div class="section-title">使用状況</div>
+      <div class="field">
+        <label>1日の使用量（500ml換算）</label>
+        <div class="slider-row">
+          <input type="range" id="rangeUsage" min="1" max="100" value="20" step="1">
+          <input type="number" class="num-box" id="numUsage" min="1" max="100" value="20" inputmode="numeric">
+          <span class="slider-unit">本</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>ペットボトル1本の仕入値（円・税込）</label>
+        <input type="number" id="bottlePrice" value="80" min="1" inputmode="numeric">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">ディスペンサー導入費用</div>
+      <div class="field">
+        <label>販売価格（税込）</label>
+        <select id="dispenserCost">
+          <option value="255000">255,000円</option>
+          <option value="355000">355,000円</option>
+          <option value="455000">455,000円</option>
+          <option value="555000">555,000円</option>
+          <option value="655000">655,000円</option>
+          <option value="755000" selected>755,000円</option>
+          <option value="custom">自由入力</option>
+        </select>
+        <div class="custom-wrap" id="customCostWrap">
+          <input type="number" id="customCost" placeholder="例：330000" min="1" inputmode="numeric">
+          <p class="custom-hint">半角数字で円単位入力</p>
+        </div>
+      </div>
+      <div class="field">
+        <label>2回目以降のフィルター代（1本・税込）<br><span class="field-note">※半年ごとに交換、年2本必要</span></label>
+        <select id="filterPrice">
+          <option value="7700">7,700円</option>
+          <option value="11000">11,000円</option>
+          <option value="15400" selected>15,400円</option>
+          <option value="custom">自由入力</option>
+        </select>
+        <div class="custom-wrap" id="customFilterWrap">
+          <input type="number" id="customFilter" placeholder="例：8800" min="7700" inputmode="numeric">
+          <p class="custom-hint">7,700円以上で入力してください</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">小規模事業者持続化補助金</div>
+      <div class="field">
+        <label>補助金の活用</label>
+        <div class="radio-group">
+          <label class="radio-label selected" id="radioLabelNone">
+            <input type="radio" name="subsidyUse" value="none" checked> 活用しない
+          </label>
+          <label class="radio-label" id="radioLabelUse">
+            <input type="radio" name="subsidyUse" value="use"> 活用する
+          </label>
+        </div>
+      </div>
+
+      <div id="subsidyDetailWrap" class="subsidy-detail-wrap">
+        <div class="subsidy-detail-title">📋 申請条件の確認</div>
+        <div class="field">
+          <label>① お客様の業種</label>
+          <select id="subsidyIndustry">
+            <option value="commerce">商業・サービス業（宿泊業・娯楽業以外）</option>
+            <option value="hotel">宿泊業・娯楽業</option>
+            <option value="manufacturing">製造業その他</option>
+            <option value="multiple">複数業態</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>② 会社全体の従業員数</label>
+          <input type="number" id="subsidyEmployees" value="0" min="0" inputmode="numeric">
+        </div>
+        <div class="field">
+          <label>③ 直近1期の利益状況<br><span class="field-note">※個人事業主は前年度確定申告の状況</span></label>
+          <select id="subsidyProfit">
+            <option value="surplus">黒字</option>
+            <option value="deficit">赤字</option>
+            <option value="zero">±0</option>
+          </select>
+        </div>
+        <div class="wage-note">
+          ⚠️ 賃金引上げ特例枠を利用する場合、事業場内最低賃金を＋50円以上UPする必要があります。<br>（年間コスト目安：約82,000円）
+        </div>
+        <div class="alert-box" id="eligibilityAlert">
+          ⚠️ 入力された従業員数では小規模事業者持続化補助金の対象外となる可能性があります。
+        </div>
+      </div>
+
+      <div class="notice-box" id="subsidyNotice">
+        <div class="notice-title">⚠️ ご注意</div>
+        <div class="notice-body">小規模事業者持続化補助金で申請をする場合は、炭酸ディスペンサー単体での申請が行えません。<br><br>「炭酸ディスペンサーを導入したことを広報活動に利用し、販促に邁進する」という想定で申請を行う為、他の商品とセットで申請致します。</div>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="btnCalc">シミュレーションを実行</button>
+  </div>
+
+  <div id="screen-result" class="hidden">
+    <h2>シミュレーション結果</h2>
+
+    <div class="card">
+      <div class="section-title">毎月のコスト比較（30日換算）</div>
+      <div class="compare-row"><span class="clabel">ペットボトル利用時</span><span class="cval" id="r-monthly-pet">-</span></div>
+      <div class="compare-row"><span class="clabel">ディスペンサー利用時<br><small>（ガス・水道・フィルター月割含む）</small></span><span class="cval" id="r-monthly-disp">-</span></div>
+      <div class="compare-row highlight"><span class="clabel">毎月の削減額</span><span class="cval green" id="r-monthly-saving">-</span></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">年間コスト比較</div>
+      <div class="compare-row"><span class="clabel">ペットボトル利用時</span><span class="cval" id="r-yearly-pet">-</span></div>
+      <div class="compare-row"><span class="clabel">ディスペンサー利用時</span><span class="cval" id="r-yearly-disp">-</span></div>
+      <div class="compare-row highlight"><span class="clabel">年間の削減額</span><span class="cval green" id="r-yearly-saving">-</span></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">初期費用の回収期間</div>
+      <div class="compare-row"><span class="clabel">販売価格</span><span class="cval" id="r-initial">-</span></div>
+      <div id="subsidy-block" class="hidden">
+        <div class="compare-row"><span class="clabel">補助金額（賃金引上げ枠・上限200万円）</span><span class="cval green" id="r-subsidy-amount">-</span></div>
+        <div class="compare-row"><span class="clabel">賃上げコスト（+50円×1,640時間）</span><span class="cval red" id="r-wage-cost">+¥82,000</span></div>
+        <div class="compare-row highlight"><span class="clabel">実質負担額</span><span class="cval" id="r-net-cost">-</span></div>
+      </div>
+      <div class="result-block">
+        <div class="rlabel" id="roi-label">初期費用の回収期間</div>
+        <div class="rvalue" id="r-roi">-</div>
+      </div>
+      <div id="roi-subsidy-block" class="hidden">
+        <div class="result-block">
+          <div class="rlabel">補助金活用後の回収期間</div>
+          <div class="rvalue green" id="r-roi-subsidy">-</div>
+          <p class="wage-result-note" id="r-wage-note">※最低1年間、50円賃上げした場合のコスト（約82,000円）を加味しています<br>（日本の平均労働時間 約1,640時間×50円で計算）</p>
+        </div>
+      </div>
+      <p class="note">※毎月の削減額から算出した目安の期間です</p>
+    </div>
+
+    <div class="card">
+      <div class="summary-row"><span>1日の使用量</span><span id="r-usage">-</span></div>
+      <div class="summary-row"><span>ペットボトル仕入値</span><span id="r-price">-</span></div>
+      <div class="summary-row"><span>販売価格</span><span id="r-cost">-</span></div>
+      <div class="summary-row"><span>フィルター代（1本）</span><span id="r-filter">-</span></div>
+    </div>
+
+    <button class="btn-back" id="btnBack">◀ 条件を変えて再計算</button>
+  </div>
+
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var rangeUsage        = document.getElementById('rangeUsage');
+  var numUsage          = document.getElementById('numUsage');
+  var bottlePrice       = document.getElementById('bottlePrice');
+  var dispenserSel      = document.getElementById('dispenserCost');
+  var customCostWrap    = document.getElementById('customCostWrap');
+  var customCost        = document.getElementById('customCost');
+  var filterSel         = document.getElementById('filterPrice');
+  var customFilterWrap  = document.getElementById('customFilterWrap');
+  var customFilter      = document.getElementById('customFilter');
+  var subsidyDetailWrap = document.getElementById('subsidyDetailWrap');
+  var subsidyNotice     = document.getElementById('subsidyNotice');
+  var subsidyIndustry   = document.getElementById('subsidyIndustry');
+  var subsidyEmployees  = document.getElementById('subsidyEmployees');
+  var eligibilityAlert  = document.getElementById('eligibilityAlert');
+  var radioLabelNone    = document.getElementById('radioLabelNone');
+  var radioLabelUse     = document.getElementById('radioLabelUse');
+  var btnCalc           = document.getElementById('btnCalc');
+  var btnBack           = document.getElementById('btnBack');
+  var screenInput       = document.getElementById('screen-input');
+  var screenResult      = document.getElementById('screen-result');
+
+  var GAS_PER_BOTTLE = (5500 / 2000) + 0.1;
+  var WAGE_COST = 82000; // 1,640時間 × 50円
+
+  // 小規模事業者 従業員上限
+  var EMPLOYEE_LIMITS = { commerce: 5, hotel: 20, manufacturing: 20, multiple: 20 };
+
+  rangeUsage.addEventListener('input', function () { numUsage.value = rangeUsage.value; });
+  numUsage.addEventListener('focus',   function () { if (this.value === '0') this.value = ''; });
+  numUsage.addEventListener('input',   function () { rangeUsage.value = this.value || 1; });
+  numUsage.addEventListener('blur',    function () { if (!this.value || parseInt(this.value) <= 0) { this.value = 1; rangeUsage.value = 1; } });
+
+  function syncCostWrap() { customCostWrap.style.display = dispenserSel.value === 'custom' ? 'block' : 'none'; if (dispenserSel.value !== 'custom') customCost.classList.remove('error'); }
+  dispenserSel.addEventListener('change', syncCostWrap);
+  dispenserSel.addEventListener('input',  syncCostWrap);
+
+  function syncFilterWrap() { customFilterWrap.style.display = filterSel.value === 'custom' ? 'block' : 'none'; if (filterSel.value !== 'custom') customFilter.classList.remove('error'); }
+  filterSel.addEventListener('change', syncFilterWrap);
+  filterSel.addEventListener('input',  syncFilterWrap);
+
+  function getSubsidyUse() {
+    var radios = document.querySelectorAll('input[name="subsidyUse"]');
+    for (var i = 0; i < radios.length; i++) { if (radios[i].checked) return radios[i].value; }
+    return 'none';
+  }
+
+  function checkEligibility() {
+    var industry  = subsidyIndustry.value;
+    var employees = parseInt(subsidyEmployees.value) || 0;
+    var limit     = EMPLOYEE_LIMITS[industry] || 20;
+    var eligible  = employees <= limit;
+    eligibilityAlert.style.display = eligible ? 'none' : 'block';
+    return eligible;
+  }
+
+  function syncSubsidy() {
+    var use = getSubsidyUse() === 'use';
+    radioLabelNone.className = 'radio-label' + (use ? '' : ' selected');
+    radioLabelUse.className  = 'radio-label' + (use ? ' selected' : '');
+    subsidyDetailWrap.style.display = use ? 'block' : 'none';
+    subsidyNotice.style.display     = use ? 'block' : 'none';
+  }
+  document.querySelectorAll('input[name="subsidyUse"]').forEach(function (r) { r.addEventListener('change', syncSubsidy); });
+
+  // 業種・従業員変更時にリアルタイムで適格チェック
+  subsidyIndustry.addEventListener('change', checkEligibility);
+  subsidyEmployees.addEventListener('input',  checkEligibility);
+
+  function fmtYen(n) { return '¥' + Math.round(n).toLocaleString('ja-JP'); }
+
+  function calcRoi(cost, saving) {
+    if (saving <= 0) return '削減効果なし';
+    var tm = cost / saving;
+    var y  = Math.floor(tm / 12);
+    var m  = Math.ceil(tm % 12);
+    var t  = '';
+    if (y > 0) t += y + '年';
+    if (m > 0) t += m + 'ヶ月';
+    return t || '1ヶ月未満';
+  }
+
+  btnCalc.addEventListener('click', function () {
+    var usage = parseFloat(numUsage.value)    || 0;
+    var price = parseFloat(bottlePrice.value) || 0;
+    var cost, filter;
+
+    if (dispenserSel.value === 'custom') {
+      cost = parseFloat(customCost.value) || 0;
+      if (cost <= 0) { customCost.classList.add('error'); customCost.focus(); return; }
+      customCost.classList.remove('error');
+    } else {
+      cost = parseFloat(dispenserSel.value) || 0;
+    }
+
+    if (filterSel.value === 'custom') {
+      filter = parseFloat(customFilter.value) || 0;
+      if (filter < 7700) { customFilter.classList.add('error'); customFilter.focus(); return; }
+      customFilter.classList.remove('error');
+    } else {
+      filter = parseFloat(filterSel.value) || 0;
+    }
+
+    var useSubsidy = getSubsidyUse() === 'use';
+
+    // 補助金利用時：適格チェック（対象外でも続行可能）
+    if (useSubsidy && !checkEligibility()) {
+      if (!confirm('入力された従業員数では小規模事業者持続化補助金の対象外となる可能性があります。このままシミュレーションを続行しますか？')) return;
+    }
+
+    var monthlyPet    = usage * price * 30;
+    var monthlyDisp   = (usage * GAS_PER_BOTTLE * 30) + ((filter * 2) / 12);
+    var monthlySaving = monthlyPet - monthlyDisp;
+
+    document.getElementById('r-usage').textContent  = usage + ' 本/日';
+    document.getElementById('r-price').textContent  = fmtYen(price) + '/本';
+    document.getElementById('r-cost').textContent   = fmtYen(cost);
+    document.getElementById('r-filter').textContent = fmtYen(filter) + '/本';
+
+    document.getElementById('r-monthly-pet').textContent  = fmtYen(monthlyPet);
+    document.getElementById('r-monthly-disp').textContent = fmtYen(monthlyDisp);
+    var ms = document.getElementById('r-monthly-saving');
+    ms.textContent = fmtYen(monthlySaving);
+    ms.className   = 'cval ' + (monthlySaving >= 0 ? 'green' : 'red');
+
+    document.getElementById('r-yearly-pet').textContent  = fmtYen(monthlyPet  * 12);
+    document.getElementById('r-yearly-disp').textContent = fmtYen(monthlyDisp * 12);
+    var ys = document.getElementById('r-yearly-saving');
+    ys.textContent = fmtYen(monthlySaving * 12);
+    ys.className   = 'cval ' + (monthlySaving >= 0 ? 'green' : 'red');
+
+    document.getElementById('r-initial').textContent = fmtYen(cost);
+
+    var roiEl = document.getElementById('r-roi');
+    roiEl.textContent = calcRoi(cost, monthlySaving);
+    roiEl.className   = 'rvalue' + (monthlySaving > 0 ? '' : ' red');
+
+    var subBlock    = document.getElementById('subsidy-block');
+    var roiSubBlock = document.getElementById('roi-subsidy-block');
+    var roiLabel    = document.getElementById('roi-label');
+
+    if (useSubsidy) {
+      // 補助金：賃金引上げ枠 上限200万・補助率2/3
+      var subAmt  = Math.min(cost * (2/3), 2000000);
+      var netCost = cost - subAmt + WAGE_COST; // 補助金引いて賃上げコスト加算
+
+      document.getElementById('r-subsidy-amount').textContent = '−' + fmtYen(subAmt);
+      document.getElementById('r-net-cost').textContent       = fmtYen(netCost);
+
+      var rs = document.getElementById('r-roi-subsidy');
+      rs.textContent = calcRoi(netCost, monthlySaving);
+      rs.className   = 'rvalue' + (monthlySaving > 0 ? ' green' : ' red');
+
+      subBlock.classList.remove('hidden');
+      roiSubBlock.classList.remove('hidden');
+      roiLabel.textContent = '補助金なしの回収期間';
+    } else {
+      subBlock.classList.add('hidden');
+      roiSubBlock.classList.add('hidden');
+      roiLabel.textContent = '初期費用の回収期間';
+    }
+
+    screenInput.classList.add('hidden');
+    screenResult.classList.remove('hidden');
+    window.scrollTo(0, 0);
+  });
+
+  btnBack.addEventListener('click', function () {
+    screenResult.classList.add('hidden');
+    screenInput.classList.remove('hidden');
+    window.scrollTo(0, 0);
+  });
+});
+</script>
+</body>
+</html>

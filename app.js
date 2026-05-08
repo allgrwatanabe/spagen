@@ -8,16 +8,17 @@ document.addEventListener('DOMContentLoaded', function () {
   var filterSel        = document.getElementById('filterPrice');
   var customFilterWrap = document.getElementById('customFilterWrap');
   var customFilter     = document.getElementById('customFilter');
-  var subsidyUse       = document.getElementById('subsidyUse');
   var subsidyTypeWrap  = document.getElementById('subsidyTypeWrap');
   var subsidyType      = document.getElementById('subsidyType');
+  var subsidyNotice    = document.getElementById('subsidyNotice');
+  var radioLabelNone   = document.getElementById('radioLabelNone');
+  var radioLabelUse    = document.getElementById('radioLabelUse');
   var btnCalc          = document.getElementById('btnCalc');
   var btnBack          = document.getElementById('btnBack');
   var screenInput      = document.getElementById('screen-input');
   var screenResult     = document.getElementById('screen-result');
-  var popupOverlay     = document.getElementById('popup-overlay');
-  var popupClose       = document.getElementById('popupClose');
 
+  // ガス代：5,500円 ÷ 2,000本 + 水道0.1円 = 2.85円/本
   var GAS_PER_BOTTLE = (5500 / 2000) + 0.1;
 
   var SUBSIDY = {
@@ -26,24 +27,11 @@ document.addEventListener('DOMContentLoaded', function () {
   };
 
   // スライダー ↔ 数値入力の連動（0残り問題対応）
-  rangeUsage.addEventListener('input', function () {
-    numUsage.value = rangeUsage.value;
-  });
-  numUsage.addEventListener('focus', function () {
-    if (this.value === '0') this.value = '';
-  });
-  numUsage.addEventListener('input', function () {
-    if (this.value === '' || this.value === '0') {
-      rangeUsage.value = 1;
-    } else {
-      rangeUsage.value = this.value;
-    }
-  });
-  numUsage.addEventListener('blur', function () {
-    if (this.value === '' || parseInt(this.value) <= 0) {
-      this.value = 1;
-      rangeUsage.value = 1;
-    }
+  rangeUsage.addEventListener('input', function () { numUsage.value = rangeUsage.value; });
+  numUsage.addEventListener('focus',   function () { if (this.value === '0') this.value = ''; });
+  numUsage.addEventListener('input',   function () { rangeUsage.value = this.value || 1; });
+  numUsage.addEventListener('blur',    function () {
+    if (!this.value || parseInt(this.value) <= 0) { this.value = 1; rangeUsage.value = 1; }
   });
 
   // 販売価格 自由入力切替
@@ -62,20 +50,23 @@ document.addEventListener('DOMContentLoaded', function () {
   filterSel.addEventListener('change', syncFilterWrap);
   filterSel.addEventListener('input',  syncFilterWrap);
 
-  // 補助金 活用する/しない切替
-  function syncSubsidyWrap() {
-    if (subsidyUse.value === 'use') {
-      subsidyTypeWrap.classList.remove('hidden');
-    } else {
-      subsidyTypeWrap.classList.add('hidden');
-    }
+  // 補助金 ラジオボタン切替
+  function getSubsidyUse() {
+    var radios = document.querySelectorAll('input[name="subsidyUse"]');
+    for (var i = 0; i < radios.length; i++) { if (radios[i].checked) return radios[i].value; }
+    return 'none';
   }
-  subsidyUse.addEventListener('change', syncSubsidyWrap);
-  subsidyUse.addEventListener('input',  syncSubsidyWrap);
 
-  // ポップアップ閉じる
-  popupClose.addEventListener('click', function () {
-    popupOverlay.classList.add('hidden');
+  function syncSubsidy() {
+    var use = getSubsidyUse() === 'use';
+    radioLabelNone.className = 'radio-label' + (use ? '' : ' selected');
+    radioLabelUse.className  = 'radio-label' + (use ? ' selected' : '');
+    subsidyTypeWrap.classList[use ? 'remove' : 'add']('hidden');
+    subsidyNotice.style.display = use ? 'block' : 'none';
+  }
+
+  document.querySelectorAll('input[name="subsidyUse"]').forEach(function (r) {
+    r.addEventListener('change', syncSubsidy);
   });
 
   function fmtYen(n) {
@@ -93,6 +84,7 @@ document.addEventListener('DOMContentLoaded', function () {
     return t || '1ヶ月未満';
   }
 
+  // 測定ボタン
   btnCalc.addEventListener('click', function () {
     var usage = parseFloat(numUsage.value)    || 0;
     var price = parseFloat(bottlePrice.value) || 0;
@@ -115,21 +107,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     var monthlyPet    = usage * price * 30;
-    var monthlyGas    = usage * GAS_PER_BOTTLE * 30;
-    var monthlyFilter = (filter * 2) / 12;
-    var monthlyDisp   = monthlyGas + monthlyFilter;
+    var monthlyDisp   = (usage * GAS_PER_BOTTLE * 30) + ((filter * 2) / 12);
     var monthlySaving = monthlyPet - monthlyDisp;
-    var yearlyPet     = monthlyPet    * 12;
-    var yearlyDisp    = monthlyDisp   * 12;
-    var yearlySaving  = monthlySaving * 12;
 
-    // 補助金計算
-    var useSubsidy = subsidyUse.value === 'use';
-    var sub        = useSubsidy ? (SUBSIDY[subsidyType.value] || SUBSIDY.normal) : null;
-    var subAmt     = useSubsidy ? Math.min(cost * sub.rate, sub.limit) : 0;
-    var netCost    = cost - subAmt;
-
-    // 結果セット
     document.getElementById('r-usage').textContent  = usage + ' 本/日';
     document.getElementById('r-price').textContent  = fmtYen(price) + '/本';
     document.getElementById('r-cost').textContent   = fmtYen(cost);
@@ -141,11 +121,11 @@ document.addEventListener('DOMContentLoaded', function () {
     ms.textContent = fmtYen(monthlySaving);
     ms.className   = 'cval ' + (monthlySaving >= 0 ? 'green' : 'red');
 
-    document.getElementById('r-yearly-pet').textContent  = fmtYen(yearlyPet);
-    document.getElementById('r-yearly-disp').textContent = fmtYen(yearlyDisp);
+    document.getElementById('r-yearly-pet').textContent  = fmtYen(monthlyPet  * 12);
+    document.getElementById('r-yearly-disp').textContent = fmtYen(monthlyDisp * 12);
     var ys = document.getElementById('r-yearly-saving');
-    ys.textContent = fmtYen(yearlySaving);
-    ys.className   = 'cval ' + (yearlySaving >= 0 ? 'green' : 'red');
+    ys.textContent = fmtYen(monthlySaving * 12);
+    ys.className   = 'cval ' + (monthlySaving >= 0 ? 'green' : 'red');
 
     document.getElementById('r-initial').textContent = fmtYen(cost);
 
@@ -153,36 +133,31 @@ document.addEventListener('DOMContentLoaded', function () {
     roiEl.textContent = calcRoi(cost, monthlySaving);
     roiEl.className   = 'rvalue' + (monthlySaving > 0 ? '' : ' red');
 
-    var subBlock    = document.getElementById('subsidy-block');
-    var roiSubBlock = document.getElementById('roi-subsidy-block');
-    var roiLabel    = document.getElementById('roi-label');
+    var useSubsidy = getSubsidyUse() === 'use';
+    var sub        = useSubsidy ? (SUBSIDY[subsidyType.value] || SUBSIDY.normal) : null;
+    var subAmt     = useSubsidy ? Math.min(cost * sub.rate, sub.limit) : 0;
 
     if (useSubsidy && subAmt > 0) {
       document.getElementById('r-subsidy-amount').textContent = '−' + fmtYen(subAmt) + '（' + sub.label + '）';
-      document.getElementById('r-net-cost').textContent       = fmtYen(netCost);
-      var roiSub = document.getElementById('r-roi-subsidy');
-      roiSub.textContent = calcRoi(netCost, monthlySaving);
-      roiSub.className   = 'rvalue' + (monthlySaving > 0 ? ' green' : ' red');
-      subBlock.classList.remove('hidden');
-      roiSubBlock.classList.remove('hidden');
-      roiLabel.textContent = '補助金なしの回収期間';
+      document.getElementById('r-net-cost').textContent       = fmtYen(cost - subAmt);
+      var rs = document.getElementById('r-roi-subsidy');
+      rs.textContent = calcRoi(cost - subAmt, monthlySaving);
+      rs.className   = 'rvalue' + (monthlySaving > 0 ? ' green' : ' red');
+      document.getElementById('subsidy-block').classList.remove('hidden');
+      document.getElementById('roi-subsidy-block').classList.remove('hidden');
+      document.getElementById('roi-label').textContent = '補助金なしの回収期間';
     } else {
-      subBlock.classList.add('hidden');
-      roiSubBlock.classList.add('hidden');
-      roiLabel.textContent = '初期費用の回収期間';
+      document.getElementById('subsidy-block').classList.add('hidden');
+      document.getElementById('roi-subsidy-block').classList.add('hidden');
+      document.getElementById('roi-label').textContent = '初期費用の回収期間';
     }
 
-    // 画面遷移
     screenInput.classList.add('hidden');
     screenResult.classList.remove('hidden');
     window.scrollTo(0, 0);
-
-    // 補助金活用の場合はポップアップ表示
-    if (useSubsidy) {
-      popupOverlay.classList.remove('hidden');
-    }
   });
 
+  // 戻るボタン
   btnBack.addEventListener('click', function () {
     screenResult.classList.add('hidden');
     screenInput.classList.remove('hidden');

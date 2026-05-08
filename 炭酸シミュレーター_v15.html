@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var WAGE_COST = 82000; // 1,640時間 × 50円
 
   // 小規模事業者 従業員上限
-  var EMPLOYEE_LIMITS = { commerce: 5, hotel: 20, manufacturing: 20, multiple: 20 };
+  var EMPLOYEE_LIMITS = { commerce: 5, hotel: 20, manufacturing: 20, multiple: 5 };
 
   rangeUsage.addEventListener('input', function () { numUsage.value = rangeUsage.value; });
   numUsage.addEventListener('focus',   function () { if (this.value === '0') this.value = ''; });
